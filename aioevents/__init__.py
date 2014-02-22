@@ -80,14 +80,14 @@ class BoundEvent(set):
     
     def calleach(self, *pargs, **kwargs):
         """
-        Similar to trigger(), but yields the results of each callback in turn.
+        Similar to trigger(), but yields the results of each handler in turn.
         
         Unlike trigger(), the event loop is not used. If the iteration is cancelled early, no further handlers are called. If a handler throws an exception, it propogates to the caller.
         
-        Because of the cancellation semmantics, handlers are not called as coroutines. 
+        any() and all() do work as expected.
         """
         if self._pman is not None:
-            yield from self._pman.trigger_returns(*pargs, **kwargs)
+            yield from self._pman.calleach(*pargs, **kwargs)
         for handler in self:
             yield handler(*pargs, **kwargs)
     
