@@ -20,7 +20,7 @@ To register an event handler, use the .handler() decorator method:
        print("I got egged: {}".format(amount))
 
 It also works on the class level:
-* Handlers registered on the class get called for every instance and receives the instance as the first argument (or None)
+* Handlers registered on the class get called for every instance and (TODO) receives the instance as the first argument or None
 * Triggering on a class only calls class-level handlers
 """
 
@@ -50,7 +50,7 @@ class BoundEvent(set):
     Acts as a set for registered handlers.
     """
     def __init__(self, doc, parent=None):
-        self.__doc__ = doc
+        self.__doc__ = "Event: " + doc
         self._pman = parent
     
     def trigger(self, *pargs, **kwargs):
@@ -67,7 +67,7 @@ class BoundEvent(set):
     
     def __call__(self, *pargs, **kwargs):
         """
-        Just calls trigger()
+        Syntactic sugar for trigger()
         """
         self.trigger(*pargs, **kwargs)
     
@@ -75,23 +75,23 @@ class BoundEvent(set):
         """
         Registers a handler
         """
-        self._handlers.add(callable)
+        self.add(callable)
         return callable
     
     def calleach(self, *pargs, **kwargs):
         """
         Similar to trigger(), but yields the results of each callback in turn.
         
-        Unlike trigger(), the event loop is not used. If the iteration is cancelled early, no further handlers are called. 
+        Unlike trigger(), the event loop is not used. If the iteration is cancelled early, no further handlers are called. If a handler throws an exception, it propogates to the caller.
         
-        XXX: If a handler throws an exception, it propogates to the caller.
+        Because of the cancellation semmantics, handlers are not called as coroutines. 
         """
         if self._pman is not None:
             yield from self._pman.trigger_returns(*pargs, **kwargs)
         for handler in self:
             yield handler(*pargs, **kwargs)
     
-class Event(UnboundEvent):
+class Event(BoundEvent):
     def __init__(self, doc):
         super().__init__(doc)
         self._instman = weakref.WeakKeyDictionary()
@@ -100,6 +100,9 @@ class Event(UnboundEvent):
         if obj is None:
             return self
         elif obj not in self._instman:
-            self._instman[obj] = EventManager(doc, self)
+            self._instman[obj] = EventManager(self.__doc__, self)
         return self._instman[obj]
+        
+    def __set__(self, obj, value):
+        raise AttributeError("Can't set an event")
 
