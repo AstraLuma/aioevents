@@ -63,7 +63,7 @@ class BoundEvent(set):
             self._pman.trigger(*pargs, **kwargs)
         el = asyncio.get_event_loop()
         for handler in self:
-            el.call_soon(handler, *pargs, **kwargs)
+            el.call_soon_threadsafe(handler, *pargs, **kwargs)
     
     def __call__(self, *pargs, **kwargs):
         """
