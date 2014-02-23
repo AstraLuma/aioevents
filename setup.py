@@ -2,8 +2,8 @@ from distutils.core import setup
 
 setup(
     name='aioevents',
-    version='0.1dev',
-    packages=['aiovents',],
+    version='0.1',
+    packages=['aioevents',],
     license='MIT License',
-    long_description=open('README.txt').read(),
+#    long_description=...,
 )

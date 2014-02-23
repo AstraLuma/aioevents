@@ -100,9 +100,10 @@ class Event(BoundEvent):
         if obj is None:
             return self
         elif obj not in self._instman:
-            self._instman[obj] = EventManager(self.__doc__, self)
+            self._instman[obj] = BoundEvent(self.__doc__, self)
         return self._instman[obj]
         
     def __set__(self, obj, value):
+        # This is so that this appears as a data descriptor.
         raise AttributeError("Can't set an event")
 
