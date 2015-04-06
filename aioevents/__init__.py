@@ -64,13 +64,24 @@ class BoundEvent(set):
         Schedules the calling of all the registered handlers. Exceptions are
         consumed.
 
-        Uses BaseEventLoop.call_soon().
+        Uses BaseEventLoop.call_soon_threadsafe() if the event loop is running,
+        otherwise calls handlers directly.
         """
         if self._pman is not None:
             self._pman.trigger(*pargs, **kwargs)
         el = asyncio.get_event_loop()
-        for handler in self:
-            el.call_soon_threadsafe(handler, *pargs, **kwargs)
+        if el.is_running():
+            for handler in self:
+                el.call_soon_threadsafe(handler, *pargs, **kwargs)
+        else:
+            for handler in self:
+                try:
+                    handler(*pargs, **kwargs)
+                except Exception:
+                    import sys
+                    import traceback
+                    print("Swallowed exception in event handler", file=sys.stderr)
+                    traceback.print_tb()
 
     def __call__(self, *pargs, **kwargs):
         """
