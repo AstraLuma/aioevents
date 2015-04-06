@@ -70,7 +70,7 @@ class BoundEvent(set):
         if self._pman is not None:
             self._pman.trigger(*pargs, **kwargs)
         el = asyncio.get_event_loop()
-        if el.is_running():
+        if el is not None and el.is_running():
             for handler in self:
                 el.call_soon_threadsafe(handler, *pargs, **kwargs)
         else:
