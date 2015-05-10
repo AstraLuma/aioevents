@@ -81,7 +81,7 @@ class BoundEvent(set):
                     import sys
                     import traceback
                     print("Swallowed exception in event handler", file=sys.stderr)
-                    traceback.print_tb()
+                    traceback.print_exc()
 
     def __call__(self, *pargs, **kwargs):
         """
