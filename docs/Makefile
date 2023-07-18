@@ -17,8 +17,7 @@ help:
 ../poetry.lock:
 
 requirements.txt: ../poetry.lock
-	# --with=docs
-	poetry export | tee "$@"
+	poetry export --with=docs | tee "$@"
 
 serve:
 	@poetry run sphinx-autobuild --open-browser --port 0 --watch ../nat20 "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS)
