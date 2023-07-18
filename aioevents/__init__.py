@@ -25,6 +25,11 @@ It also works on the class level:
 * Triggering on a class only calls class-level handlers
 """
 
+import asyncio
+import weakref
+__all__ = 'Event',
+
+
 """
 About References
 
@@ -44,9 +49,6 @@ freed.
 When a class is freed (all instances already collected), the unbound events are
 collected. Again, handlers are left to fend for themselves.
 """
-import asyncio
-import weakref
-__all__ = 'Event',
 
 
 class BoundEvent(set):
@@ -55,6 +57,7 @@ class BoundEvent(set):
 
     Acts as a set for registered handlers.
     """
+
     def __init__(self, doc, parent=None):
         self.__doc__ = "Event: " + doc
         self._pman = parent

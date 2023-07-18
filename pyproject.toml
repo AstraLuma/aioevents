@@ -1,0 +1,43 @@
+[tool.poetry]
+name = "aioevents"
+version = "0.2"
+description = "Events for asyncio"
+authors = ["Jamie Bliss <jamie@ivyleav.es>"]
+license = "MIT"
+readme = "README.md"
+repository = "https://github.com/AstraLuma/aioevents"
+documentation = "https://aioevents.readthedocs.io/"
+packages = [{include = "aioevents"}]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+
+[tool.poetry.group.dev.dependencies]
+watchgha = "^2.1.1"
+
+
+[tool.poetry.group.docs.dependencies]
+sphinx = "^6.0.0"
+sphinx-autobuild = "^2021.3.14"
+sphinx-rtd-theme = "^1.2.2"
+# sphinxcontrib-prettyspecialmethods = "^0.1.0"
+
+
+[tool.poetry.group.test.dependencies]
+pytest = "^7.4.0"
+pytest-asyncio = "^0.21.0"
+flake8 = "^6.0.0"
+
+
+[tool.pytest.ini_options]
+minversion = "7.4"
+testpaths = [
+    "tests",
+]
+required_plugins = "pytest-asyncio"
+asyncio_mode = "auto"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
