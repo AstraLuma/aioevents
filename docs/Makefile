@@ -14,6 +14,9 @@ help:
 
 .PHONY: help Makefile serve dump-inv
 
+requirements.txt:
+	poetry export --with=docs > "$@"
+
 serve:
 	@poetry run sphinx-autobuild --open-browser --port 0 --watch ../nat20 "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS)
 
