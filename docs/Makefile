@@ -8,6 +8,8 @@ SPHINXBUILD   ?= sphinx-build
 SOURCEDIR     = .
 BUILDDIR      = _build
 
+export PATH := /home/docs/.local/bin:$(PATH)
+
 # Put it first so that "make" without argument is like "make help".
 help:
 	@poetry run $(SPHINXBUILD) -M help "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
