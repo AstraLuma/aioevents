@@ -10,12 +10,12 @@ BUILDDIR      = _build
 
 # Put it first so that "make" without argument is like "make help".
 help:
-	@$(SPHINXBUILD) -M help "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
+	@poetry run $(SPHINXBUILD) -M help "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
 
 .PHONY: help Makefile serve dump-inv
 
-requirements.txt:
-	poetry export --with=docs > "$@"
+requirements.txt: 
+	poetry export --with=docs | tee "$@"
 
 serve:
 	@poetry run sphinx-autobuild --open-browser --port 0 --watch ../nat20 "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS)
@@ -26,4 +26,4 @@ dump-inv: html
 # Catch-all target: route all unknown targets to Sphinx using the new
 # "make mode" option.  $(O) is meant as a shortcut for $(SPHINXOPTS).
 %: Makefile
-	@$(SPHINXBUILD) -M $@ "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
+	@poetry run $(SPHINXBUILD) -M $@ "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
