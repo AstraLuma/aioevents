@@ -22,7 +22,7 @@ requirements.txt: ../poetry.lock
 	poetry export --with=docs | tee "$@"
 
 serve:
-	@poetry run sphinx-autobuild --open-browser --port 0 --watch ../nat20 "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS)
+	@poetry run sphinx-autobuild --open-browser --port 0 --watch .. "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS)
 
 dump-inv: html
 	@poetry run python ./dump_inv.py

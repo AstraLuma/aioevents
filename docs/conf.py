@@ -35,11 +35,3 @@ html_static_path = ['_static']
 intersphinx_mapping = {
     'python': ('https://docs.python.org/3', None),
 }
-
-autodoc_default_options = {
-    'members': True,
-    'undoc-members': True,
-    'special-members': ', '.join([
-        '__aenter__', '__aexit__',
-    ]),
-}

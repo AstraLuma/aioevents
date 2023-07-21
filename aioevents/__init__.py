@@ -1,17 +1,18 @@
 """
 Events for asyncio
 
-In order for your class to have an event, just use it like so:
+In order for your class to have an event, just use it like so::
 
-class Spam:
-    egged = Event("The spam has been egged")
+    class Spam:
+        egged = Event("The spam has been egged")
 
-To trigger an event, just call it like a method:
->>> Spam().egged(5)
+To trigger an event, just call it like a method::
+
+    >>> Spam().egged(5)
 
 All the positional and keyword arguments get passed to the handlers.
 
-To register an event handler, use the .handler() decorator method:
+To register an event handler, use the .handler() decorator method::
 
    myspam = Spam()
 
@@ -20,8 +21,9 @@ To register an event handler, use the .handler() decorator method:
        print("I got egged: {}".format(amount))
 
 It also works on the class level:
-* Handlers registered on the class get called for every instance and
-  (TODO) receives the instance as the first argument or None
+
+* Handlers registered on the class get called for every instance and (TODO)
+  receives the instance as the first argument or None
 * Triggering on a class only calls class-level handlers
 """
 
@@ -53,26 +55,28 @@ collected. Again, handlers are left to fend for themselves.
 
 class BoundEvent(set):
     """
-    A bound event. Also acts as the base for unbound events.
+    A bound event, produced when :class:`Event` is used as a property on an instance.
 
     Acts as a set for registered handlers.
     """
+    __doc__: str
 
-    def __init__(self, doc, parent=None):
-        if not doc.startswith("Event:"):
-            doc = f"Event: {doc}"  # I'm not completely convinced this is a good idea
-        self.__doc__ = doc
+    def __init__(self, doc: str | None = None, parent: 'Event | None' = None):
+        if isinstance(doc, str):
+            if not doc.startswith("Event:"):
+                doc = f"Event: {doc}"  # I'm not completely convinced this is a good idea
+            self.__doc__ = doc
         self._pman = parent
         if parent is not None:
             self.__name__ = parent.__name__
             self.__qualname__ = parent.__qualname__
 
-    def trigger(self, *pargs, **kwargs):
-        """e.trigger(...) -> None
+    def trigger(self, *pargs, **kwargs) -> None:
+        """
         Schedules the calling of all the registered handlers. Exceptions are
         consumed.
 
-        Uses BaseEventLoop.call_soon_threadsafe() if the event loop is running,
+        Uses :meth:`~asyncio.loop.call_soon_threadsafe` if the event loop is running,
         otherwise calls handlers directly.
         """
         if self._pman is not None:
@@ -93,7 +97,7 @@ class BoundEvent(set):
 
     def __call__(self, *pargs, **kwargs):
         """
-        Syntactic sugar for trigger()
+        Syntactic sugar for :meth:`trigger`
         """
         self.trigger(*pargs, **kwargs)
 
@@ -106,13 +110,13 @@ class BoundEvent(set):
 
     def calleach(self, *pargs, **kwargs):
         """
-        Similar to trigger(), but yields the results of each handler in turn.
+        Similar to :meth:`trigger`, but yields the results of each handler in turn.
 
-        Unlike trigger(), the event loop is not used. If the iteration is
+        Unlike :meth:`trigger`, the event loop is not used. If the iteration is
         cancelled early, no further handlers are called. If a handler throws an
         exception, it propogates to the caller.
 
-        any() and all() do work as expected.
+        :func:`any` and :func:`all` do work as expected.
         """
         if self._pman is not None:
             yield from self._pman.calleach(*pargs, **kwargs)
@@ -121,18 +125,25 @@ class BoundEvent(set):
 
 
 class Event(BoundEvent):
+    """
+    An event that an object may fire.
+
+    Acts as a set for registered events.
+
+    Acts as a property descriptor, producing :class:`BoundEvent`
+    """
     __name__: str
     __qualname__: str
 
-    def __init__(self, doc):
+    def __init__(self, doc: str | None = None):
         super().__init__(doc)
         self._instman = weakref.WeakKeyDictionary()
 
-    def __set_name__(self, owner, name):
+    def __set_name__(self, owner: type, name: str):
         self.__name__ = name
         self.__qualname__ = f"{owner.__qualname__}.{name}"
 
-    def __get__(self, obj, type=None):
+    def __get__(self, obj, type=None) -> BoundEvent:
         if obj is None:
             return self
         elif obj not in self._instman:
