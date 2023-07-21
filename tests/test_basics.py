@@ -1,9 +1,4 @@
-def test_basics(mocker):
-    from aioevents import Event
-
-    class Spam:
-        egged = Event("The spam has been egged")
-
+def test_basics(Spam, mocker):
     spam = Spam()
 
     inst_handler = mocker.stub('inst_handler')
