@@ -34,8 +34,6 @@ html_static_path = ['_static']
 
 intersphinx_mapping = {
     'python': ('https://docs.python.org/3', None),
-    'bleak': ('https://bleak.readthedocs.io/en/latest/', None),
-    # Textual
 }
 
 autodoc_default_options = {
