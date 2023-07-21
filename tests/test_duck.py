@@ -20,3 +20,14 @@ def test_docstrings(Spam):
     assert inspect.getdoc(Spam.egged)
     assert inspect.getdoc(Spam().egged)
     assert inspect.getdoc(Spam.egged) == inspect.getdoc(Spam().egged)
+
+
+def test_name(Spam):
+    """
+    Test name attrs
+    """
+    # TODO: Are there standard library ways to pull this info?
+    assert Spam.egged.__name__ == 'egged'
+    assert Spam.egged.__qualname__.endswith('Spam.egged')
+    assert Spam().egged.__name__ == 'egged'
+    assert Spam().egged.__qualname__.endswith('Spam.egged')

@@ -63,6 +63,9 @@ class BoundEvent(set):
             doc = f"Event: {doc}"  # I'm not completely convinced this is a good idea
         self.__doc__ = doc
         self._pman = parent
+        if parent is not None:
+            self.__name__ = parent.__name__
+            self.__qualname__ = parent.__qualname__
 
     def trigger(self, *pargs, **kwargs):
         """e.trigger(...) -> None
@@ -118,9 +121,16 @@ class BoundEvent(set):
 
 
 class Event(BoundEvent):
+    __name__: str
+    __qualname__: str
+
     def __init__(self, doc):
         super().__init__(doc)
         self._instman = weakref.WeakKeyDictionary()
+
+    def __set_name__(self, owner, name):
+        self.__name__ = name
+        self.__qualname__ = f"{owner.__qualname__}.{name}"
 
     def __get__(self, obj, type=None):
         if obj is None:
