@@ -59,7 +59,9 @@ class BoundEvent(set):
     """
 
     def __init__(self, doc, parent=None):
-        self.__doc__ = "Event: " + doc
+        if not doc.startswith("Event:"):
+            doc = f"Event: {doc}"  # I'm not completely convinced this is a good idea
+        self.__doc__ = doc
         self._pman = parent
 
     def trigger(self, *pargs, **kwargs):
