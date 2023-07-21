@@ -28,6 +28,7 @@ It also works on the class level:
 """
 
 import asyncio
+import functools
 import weakref
 __all__ = 'Event',
 
@@ -84,7 +85,7 @@ class BoundEvent(set):
         el = asyncio.get_event_loop()
         if el is not None and el.is_running():
             for handler in self:
-                el.call_soon_threadsafe(handler, *pargs, **kwargs)
+                el.call_soon_threadsafe(functools.partial(handler, *pargs, **kwargs))
         else:
             for handler in self:
                 try:
