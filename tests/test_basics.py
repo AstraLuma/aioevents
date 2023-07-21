@@ -1,4 +1,5 @@
 import asyncio
+import logging
 
 
 async def test_trigger(Spam, mocker):
@@ -74,3 +75,34 @@ def test_trigger_noloop(Spam, mocker):
 
     assert inst_handler.call_args == ((42,), {'foo': 'bar'})
     assert cls_handler.call_args == ((42,), {'foo': 'bar'})
+
+
+async def test_trigger_exception(Spam, caplog):
+    """
+    Test that exceptions produce log events
+    """
+    @Spam.egged.handler
+    def on_egged(foo):
+        raise Exception("Boo!")
+
+    with caplog.at_level(logging.DEBUG, 'aioevents'):
+        Spam.egged(foo='bar')
+        await asyncio.sleep(0)  # Yield to everything
+
+    assert any(r.name in ('aioevents', 'asyncio')
+               and r.levelname == 'ERROR' for r in caplog.records)
+
+
+def test_trigger_exception_noloop(Spam, caplog):
+    """
+    Test that exceptions produce log events (outside of a loop)
+    """
+    @Spam.egged.handler
+    def on_egged(foo):
+        raise Exception("Boo!")
+
+    with caplog.at_level(logging.DEBUG, 'aioevents'):
+        Spam.egged(foo='bar')
+
+    assert any(r.name in ('aioevents', 'asyncio')
+               and r.levelname == 'ERROR' for r in caplog.records)

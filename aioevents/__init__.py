@@ -29,9 +29,11 @@ It also works on the class level:
 
 import asyncio
 import functools
+import logging
 import weakref
 __all__ = 'Event',
 
+LOG = logging.getLogger(__name__)
 
 """
 About References
@@ -91,10 +93,7 @@ class BoundEvent(set):
                 try:
                     handler(*pargs, **kwargs)
                 except Exception:
-                    import sys
-                    import traceback
-                    print("Swallowed exception in event handler", file=sys.stderr)
-                    traceback.print_exc()
+                    LOG.exception("Swallowed exception in event handler")
 
     def __call__(self, *pargs, **kwargs):
         """
