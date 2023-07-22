@@ -85,15 +85,8 @@ class BoundEvent(set):
         if self._pman is not None:
             self._pman.trigger(*pargs, **kwargs)
         el = asyncio.get_event_loop()
-        if el is not None and el.is_running():
-            for handler in self:
-                el.call_soon_threadsafe(functools.partial(handler, *pargs, **kwargs))
-        else:
-            for handler in self:
-                try:
-                    handler(*pargs, **kwargs)
-                except Exception:
-                    LOG.exception("Swallowed exception in event handler")
+        for handler in self:
+            el.call_soon_threadsafe(functools.partial(handler, *pargs, **kwargs))
 
     def __call__(self, *pargs, **kwargs):
         """

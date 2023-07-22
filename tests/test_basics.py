@@ -59,7 +59,7 @@ async def test_trigger_kwargs(Spam, mocker):
     assert cls_handler.call_args == ((), {'foo': 'bar'})
 
 
-def test_trigger_noloop(Spam, mocker):
+def test_trigger_noloop(event_loop, Spam, mocker):
     """
     Test that everything works when there's no loop
     """
@@ -72,6 +72,8 @@ def test_trigger_noloop(Spam, mocker):
     Spam.egged.handler(cls_handler)
 
     spam.egged(42, foo='bar')
+
+    event_loop.run_until_complete(asyncio.sleep(0))
 
     assert inst_handler.call_args == ((42,), {'foo': 'bar'})
     assert cls_handler.call_args == ((42,), {'foo': 'bar'})
@@ -93,7 +95,7 @@ async def test_trigger_exception(Spam, caplog):
                and r.levelname == 'ERROR' for r in caplog.records)
 
 
-def test_trigger_exception_noloop(Spam, caplog):
+def test_trigger_exception_noloop(event_loop, Spam, caplog):
     """
     Test that exceptions produce log events (outside of a loop)
     """
@@ -103,6 +105,7 @@ def test_trigger_exception_noloop(Spam, caplog):
 
     with caplog.at_level(logging.DEBUG, 'aioevents'):
         Spam.egged(foo='bar')
+        event_loop.run_until_complete(asyncio.sleep(0))
 
     assert any(r.name in ('aioevents', 'asyncio')
                and r.levelname == 'ERROR' for r in caplog.records)
