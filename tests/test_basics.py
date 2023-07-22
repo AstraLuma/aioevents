@@ -87,7 +87,7 @@ async def test_trigger_exception(Spam, caplog):
     def on_egged(foo):
         raise Exception("Boo!")
 
-    with caplog.at_level(logging.DEBUG, 'aioevents'):
+    with caplog.at_level(logging.DEBUG):
         Spam.egged(foo='bar')
         await asyncio.sleep(0)  # Yield to everything
 
@@ -103,7 +103,7 @@ def test_trigger_exception_noloop(event_loop, Spam, caplog):
     def on_egged(foo):
         raise Exception("Boo!")
 
-    with caplog.at_level(logging.DEBUG, 'aioevents'):
+    with caplog.at_level(logging.DEBUG):
         Spam.egged(foo='bar')
         event_loop.run_until_complete(asyncio.sleep(0))
 
