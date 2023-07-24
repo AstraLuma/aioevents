@@ -168,3 +168,29 @@ def test_trigger_exception_noloop(event_loop, Spam, caplog):
 
     assert any(r.name in ('aioevents',)
                and r.levelname == 'ERROR' for r in caplog.records), caplog.records
+
+
+async def test_weakref(Spam):
+    """
+    Test that weak handlers are cleaned up properly.
+    """
+    calls = 0
+
+    def sync_handler():
+        nonlocal calls
+        calls += 1
+
+    async def async_handler():
+        nonlocal calls
+        calls += 1
+
+    Spam.egged.handler(sync_handler, weak=True)
+    Spam.egged.handler(async_handler, weak=True)
+
+    del sync_handler, async_handler
+    gc.collect()
+
+    Spam.egged()
+    await asyncio.sleep(0)
+
+    assert calls == 0

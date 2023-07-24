@@ -30,6 +30,7 @@ It also works on the class level:
 import asyncio
 import inspect
 import logging
+import types
 import weakref
 __all__ = 'Event',
 
@@ -120,7 +121,10 @@ class BoundEvent(set):
             *(
                 _call_handler_async(func, *pargs, **kwargs) if inspect.iscoroutinefunction(func)
                 else _call_handler_sync(func, *pargs, **kwargs)
-                for func in self
+                for func in [
+                    f() if isinstance(f, weakref.ReferenceType) else f
+                    for f in self
+                ]
             ),
             return_exceptions=True,
         )
@@ -131,11 +135,20 @@ class BoundEvent(set):
         """
         self.trigger(*pargs, **kwargs)
 
-    def handler(self, callable):
+    def handler(self, callable, *, weak=True):
         """
-        Registers a handler
+        Registers a handler.
+
+        If :param:`weak` is True, keep a weakref to the handler instead of a
+        strong one.
         """
-        self.add(callable)
+        if weak:
+            if isinstance(callable, types.MethodType):
+                self.add(weakref.WeakMethod(callable, lambda ref: self.remove(ref)))
+            else:
+                self.add(weakref.ref(callable, lambda ref: self.remove(ref)))
+        else:
+            self.add(callable)
         return callable
 
     def calleach(self, *pargs, **kwargs):
