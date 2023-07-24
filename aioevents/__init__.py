@@ -29,6 +29,7 @@ It also works on the class level:
 
 import asyncio
 import functools
+import inspect
 import logging
 import weakref
 __all__ = 'Event',
@@ -56,6 +57,38 @@ collected. Again, handlers are left to fend for themselves.
 """
 
 
+def _call_handler_sync(func, *pargs, **kwargs):
+    """
+    Queue a sync function to be called, and wire it into everything
+    """
+    fut = asyncio.get_event_loop().create_future()
+
+    def _wrapper():
+        try:
+            func(*pargs, **kwargs)
+        except BaseException:
+            LOG.exception("Swallowed exception from handler %r", func)
+        finally:
+            fut.set_result(None)
+
+    asyncio.get_event_loop().call_soon_threadsafe(_wrapper)
+
+    return fut
+
+
+def _call_handler_async(func, *pargs, **kwargs):
+    """
+    Queue an async function to be called.
+    """
+    async def _wrapper():
+        try:
+            return await func(*pargs, **kwargs)
+        except BaseException:
+            LOG.exception("Swallowed exception from handler %r", func)
+
+    return asyncio.create_task(_wrapper())
+
+
 class BoundEvent(set):
     """
     A bound event, produced when :class:`Event` is used as a property on an instance.
@@ -74,7 +107,7 @@ class BoundEvent(set):
             self.__name__ = parent.__name__
             self.__qualname__ = parent.__qualname__
 
-    def trigger(self, *pargs, **kwargs) -> None:
+    def trigger(self, *pargs, **kwargs) -> asyncio.Future:
         """
         Schedules the calling of all the registered handlers. Exceptions are
         consumed.
@@ -84,9 +117,14 @@ class BoundEvent(set):
         """
         if self._pman is not None:
             self._pman.trigger(*pargs, **kwargs)
-        el = asyncio.get_event_loop()
-        for handler in self:
-            el.call_soon_threadsafe(functools.partial(handler, *pargs, **kwargs))
+        return asyncio.gather(
+            *(
+                _call_handler_async(func, *pargs, **kwargs) if inspect.iscoroutinefunction(func)
+                else _call_handler_sync(func, *pargs, **kwargs)
+                for func in self
+            ),
+            return_exceptions=True,
+        )
 
     def __call__(self, *pargs, **kwargs):
         """
