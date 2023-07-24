@@ -28,7 +28,6 @@ It also works on the class level:
 """
 
 import asyncio
-import functools
 import inspect
 import logging
 import weakref

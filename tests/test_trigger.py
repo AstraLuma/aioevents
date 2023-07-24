@@ -3,7 +3,7 @@ import gc
 import logging
 
 
-#### IMPORTANT ####
+# # # IMPORTANT # # #
 # Because aioevents swallows exceptions, asserts cannot go in handlers. Data
 # must be martialed out and tested in the main body.
 
