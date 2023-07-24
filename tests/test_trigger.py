@@ -194,3 +194,58 @@ async def test_weakref(Spam):
     await asyncio.sleep(0)
 
     assert calls == 0
+
+
+async def test_methods(Spam):
+    """
+    Test that bound method handlers work correctly.
+    """
+    calls = 0
+
+    class Harry:
+        def sync_handler(self):
+            nonlocal calls
+            calls += 1
+
+        async def async_handler(self):
+            nonlocal calls
+            calls += 1
+
+    h = Harry()
+    Spam.egged.handler(h.sync_handler)
+    Spam.egged.handler(h.async_handler)
+
+    gc.collect()
+
+    Spam.egged()
+    await asyncio.sleep(0)
+
+    assert calls == 2
+
+
+async def test_methods(Spam):
+    """
+    Test that bound method handlers and weakrref work correctly.
+    """
+    calls = 0
+
+    class Harry:
+        def sync_handler(self):
+            nonlocal calls
+            calls += 1
+
+        async def async_handler(self):
+            nonlocal calls
+            calls += 1
+
+    h = Harry()
+    Spam.egged.handler(h.sync_handler, weak=True)
+    Spam.egged.handler(h.async_handler, weak=True)
+
+    del h
+    gc.collect()
+
+    Spam.egged()
+    await asyncio.sleep(0)
+
+    assert calls == 0
