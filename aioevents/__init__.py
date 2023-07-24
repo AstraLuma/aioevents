@@ -107,27 +107,26 @@ class BoundEvent(set):
             self.__name__ = parent.__name__
             self.__qualname__ = parent.__qualname__
 
-    def trigger(self, *pargs, **kwargs) -> asyncio.Future:
+    def trigger(self, *pargs, **kwargs) -> None:
         """
         Schedules the calling of all the registered handlers. Exceptions are
         consumed.
 
-        Uses :meth:`~asyncio.loop.call_soon_threadsafe` if the event loop is running,
-        otherwise calls handlers directly.
+        If the loop is not currently running, queues the callbacks to be called
+        after it starts.
         """
         if self._pman is not None:
             self._pman.trigger(*pargs, **kwargs)
-        return asyncio.gather(
-            *(
-                _call_handler_async(func, *pargs, **kwargs) if inspect.iscoroutinefunction(func)
-                else _call_handler_sync(func, *pargs, **kwargs)
-                for func in [
-                    f() if isinstance(f, weakref.ReferenceType) else f
-                    for f in self
-                ]
-            ),
-            return_exceptions=True,
-        )
+
+        # Supposedly orphan tasks will be garbage collected, but I can't reproduce.
+        for func in [
+                f() if isinstance(f, weakref.ReferenceType) else f
+                for f in self
+        ]:  # Doubles as a snapshot of the handlers, so they can't be mutated in the loop
+            if inspect.iscoroutinefunction(func):
+                _call_handler_async(func, *pargs, **kwargs)
+            else:
+                _call_handler_sync(func, *pargs, **kwargs)
 
     def __call__(self, *pargs, **kwargs):
         """
@@ -135,12 +134,16 @@ class BoundEvent(set):
         """
         self.trigger(*pargs, **kwargs)
 
-    def handler(self, callable, *, weak=True):
+    def handler(self, callable, *, weak: bool = False):
         """
         Registers a handler.
 
-        If :param:`weak` is True, keep a weakref to the handler instead of a
+        If ``weak`` is True, keep a weakref to the handler instead of a
         strong one.
+
+        Args:
+            callable: Function to call when event is emitted.
+            weak: Should we keep a strong or weak ref?
         """
         if weak:
             if isinstance(callable, types.MethodType):

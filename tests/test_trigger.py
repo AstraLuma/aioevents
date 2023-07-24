@@ -110,11 +110,11 @@ async def test_handler_gc(Spam, sync_handler, async_handler):
     This is because oprhaned Tasks may be cancelled and cleaned up. See
     :func:`asyncio.create_task`.
     """
+    # So far, I can't get this test to fail.
     Spam.egged.handler(async_handler)
     Spam.egged.handler(sync_handler)
 
     Spam.egged(42, foo='bar')  # This creates any tasks/threads/etc to call handlers
-
     gc.collect()  # This will hopefully clean up any orphans
     await asyncio.sleep(0)  # Yield to the loop, letting things execute
 
@@ -223,7 +223,7 @@ async def test_methods(Spam):
     assert calls == 2
 
 
-async def test_methods(Spam):
+async def test_methods_weak(Spam):
     """
     Test that bound method handlers and weakrref work correctly.
     """
