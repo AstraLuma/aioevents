@@ -17,14 +17,13 @@ To register an event handler, use the .handler() decorator method::
    myspam = Spam()
 
    @myspam.egged.handler
-   def gotegged(amount):
+   def on_egged(sender, amount):
        print("I got egged: {}".format(amount))
 
 It also works on the class level:
 
-* Handlers registered on the class get called for every instance and (TODO)
-  receives the instance as the first argument or None
-* Triggering on a class only calls class-level handlers
+* Handlers registered on the class get called for every instance
+* Triggering on a class only calls class-level handlers, with sender as ``None``
 """
 
 import asyncio
@@ -97,12 +96,13 @@ class BoundEvent(set):
     """
     __doc__: str
 
-    def __init__(self, doc: str | None = None, parent: 'Event | None' = None):
+    def __init__(self, doc: str | None = None, parent: 'Event | None' = None, owner=None):
         if isinstance(doc, str):
             if not doc.startswith("Event:"):
                 doc = f"Event: {doc}"  # I'm not completely convinced this is a good idea
             self.__doc__ = doc
         self._pman = parent
+        self._owner = None if owner is None else weakref.ref(owner)
         if parent is not None:
             self.__name__ = parent.__name__
             self.__qualname__ = parent.__qualname__
@@ -115,18 +115,16 @@ class BoundEvent(set):
         If the loop is not currently running, queues the callbacks to be called
         after it starts.
         """
-        if self._pman is not None:
-            self._pman.trigger(*pargs, **kwargs)
-
+        owner = None if self._owner is None else self._owner()
         # Supposedly orphan tasks will be garbage collected, but I can't reproduce.
         for func in [
                 f() if isinstance(f, weakref.ReferenceType) else f
-                for f in self
+                for f in [*(self._pman or set()), *self]
         ]:  # Doubles as a snapshot of the handlers, so they can't be mutated in the loop
             if inspect.iscoroutinefunction(func):
-                _call_handler_async(func, *pargs, **kwargs)
+                _call_handler_async(func, owner, *pargs, **kwargs)
             else:
-                _call_handler_sync(func, *pargs, **kwargs)
+                _call_handler_sync(func, owner, *pargs, **kwargs)
 
     def __call__(self, *pargs, **kwargs):
         """
@@ -154,21 +152,6 @@ class BoundEvent(set):
             self.add(callable)
         return callable
 
-    def calleach(self, *pargs, **kwargs):
-        """
-        Similar to :meth:`trigger`, but yields the results of each handler in turn.
-
-        Unlike :meth:`trigger`, the event loop is not used. If the iteration is
-        cancelled early, no further handlers are called. If a handler throws an
-        exception, it propogates to the caller.
-
-        :func:`any` and :func:`all` do work as expected.
-        """
-        if self._pman is not None:
-            yield from self._pman.calleach(*pargs, **kwargs)
-        for handler in self:
-            yield handler(*pargs, **kwargs)
-
 
 class Event(BoundEvent):
     """
@@ -193,7 +176,7 @@ class Event(BoundEvent):
         if obj is None:
             return self
         elif obj not in self._instman:
-            self._instman[obj] = BoundEvent(self.__doc__, self)
+            self._instman[obj] = BoundEvent(self.__doc__, self, obj)
         return self._instman[obj]
 
     def __set__(self, obj, value):

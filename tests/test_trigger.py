@@ -26,7 +26,10 @@ async def test_trigger(Spam, sync_handler):
 
     await asyncio.sleep(0)  # Yield to everything
 
-    assert sync_handler.calls == [((), {}), ((), {})]
+    assert sync_handler.calls == [
+        ((spam,), {}),
+        ((spam,), {}),
+    ]
 
 
 async def test_trigger_pargs(Spam, sync_handler):
@@ -42,8 +45,8 @@ async def test_trigger_pargs(Spam, sync_handler):
     await asyncio.sleep(0)  # Yield to everything
 
     assert sync_handler.calls == [
-        ((42, "foobar"), {}),
-        ((42, "foobar"), {}),
+        ((spam, 42, "foobar"), {}),
+        ((spam, 42, "foobar"), {}),
     ]
 
 
@@ -60,8 +63,8 @@ async def test_trigger_kwargs(Spam, sync_handler):
     await asyncio.sleep(0)  # Yield to everything
 
     assert sync_handler.calls == [
-        ((), {'foo': 'bar'}),
-        ((), {'foo': 'bar'}),
+        ((spam,), {'foo': 'bar'}),
+        ((spam,), {'foo': 'bar'}),
     ]
 
 
@@ -79,8 +82,8 @@ def test_trigger_noloop(event_loop, Spam, sync_handler):
     event_loop.run_until_complete(asyncio.sleep(0))
 
     assert sync_handler.calls == [
-        ((42,), {'foo': 'bar'}),
-        ((42,), {'foo': 'bar'}),
+        ((spam, 42), {'foo': 'bar'}),
+        ((spam, 42), {'foo': 'bar'}),
     ]
 
 
@@ -97,8 +100,8 @@ async def test_trigger_async(Spam, async_handler):
     await asyncio.sleep(0)  # Yield to everything
 
     assert async_handler.calls == [
-        ((42,), {'foo': 'bar'}),
-        ((42,), {'foo': 'bar'}),
+        ((spam, 42), {'foo': 'bar'}),
+        ((spam, 42), {'foo': 'bar'}),
     ]
 
 
@@ -127,7 +130,7 @@ async def test_trigger_exception(Spam, caplog):
     Test that exceptions produce log events
     """
     @Spam.egged.handler
-    def on_egged(foo):
+    def on_egged(sender, foo):
         raise Exception("Boo!")
 
     with caplog.at_level(logging.DEBUG):
@@ -143,7 +146,7 @@ async def test_trigger_exception_async(Spam, caplog):
     Test that exceptions produce log events
     """
     @Spam.egged.handler
-    async def on_egged(foo):
+    async def on_egged(sender, foo):
         raise Exception("Boo!")
 
     with caplog.at_level(logging.DEBUG):
@@ -159,7 +162,7 @@ def test_trigger_exception_noloop(event_loop, Spam, caplog):
     Test that exceptions produce log events (outside of a loop)
     """
     @Spam.egged.handler
-    def on_egged(foo):
+    def on_egged(sender, foo):
         raise Exception("Boo!")
 
     with caplog.at_level(logging.DEBUG):
@@ -176,11 +179,11 @@ async def test_weakref(Spam):
     """
     calls = 0
 
-    def sync_handler():
+    def sync_handler(sender):
         nonlocal calls
         calls += 1
 
-    async def async_handler():
+    async def async_handler(sender):
         nonlocal calls
         calls += 1
 
@@ -203,11 +206,11 @@ async def test_methods(Spam):
     calls = 0
 
     class Harry:
-        def sync_handler(self):
+        def sync_handler(self, sender):
             nonlocal calls
             calls += 1
 
-        async def async_handler(self):
+        async def async_handler(self, sender):
             nonlocal calls
             calls += 1
 
@@ -230,11 +233,11 @@ async def test_methods_weak(Spam):
     calls = 0
 
     class Harry:
-        def sync_handler(self):
+        def sync_handler(self, sender):
             nonlocal calls
             calls += 1
 
-        async def async_handler(self):
+        async def async_handler(self, sender):
             nonlocal calls
             calls += 1
 

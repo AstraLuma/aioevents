@@ -1,10 +1,8 @@
-aioevents
-=========
+# aioevents
 
 Events for asyncio (PEP 3156)
 
-Usage
------
+## Usage
 
 To declare an event:
 
@@ -22,7 +20,7 @@ To register a handler:
 spam = Spam()
 
 @spam.egged.handler
-def MySpamHandler(amt):
+def on_egged(sender, amt):
     print("Spam got egged {} times".format(amt)")
 ```
 
