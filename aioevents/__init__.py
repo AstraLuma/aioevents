@@ -1,29 +1,5 @@
 """
 Events for asyncio
-
-In order for your class to have an event, just use it like so::
-
-    class Spam:
-        egged = Event("The spam has been egged")
-
-To trigger an event, just call it like a method::
-
-    >>> Spam().egged(5)
-
-All the positional and keyword arguments get passed to the handlers.
-
-To register an event handler, use the .handler() decorator method::
-
-   myspam = Spam()
-
-   @myspam.egged.handler
-   def on_egged(sender, amount):
-       print("I got egged: {}".format(amount))
-
-It also works on the class level:
-
-* Handlers registered on the class get called for every instance
-* Triggering on a class only calls class-level handlers, with sender as ``None``
 """
 
 import asyncio
@@ -34,26 +10,6 @@ import weakref
 __all__ = 'Event',
 
 LOG = logging.getLogger(__name__)
-
-"""
-About References
-
-Just to document how references are managed:
-
-The class strongly references the unbound Event
-The Event holds a dictionary of weakly referenced keys to Instances mapping to
-strong references of bound events.
-Bound events hold strong references registered callables.
-
-A strong reference of a handler does not need to be kept by the application.
-
-When an instance is freed, its keys in the bound events tables are freed, and
-the bound events are collected. Registered handlers are unrefed and possibly
-freed.
-
-When a class is freed (all instances already collected), the unbound events are
-collected. Again, handlers are left to fend for themselves.
-"""
 
 
 def _call_handler_sync(func, *pargs, **kwargs):
