@@ -3,6 +3,8 @@ Test how events ducktype
 """
 import inspect
 
+import pytest
+
 
 def test_descriptor(Spam):
     """
@@ -31,3 +33,11 @@ def test_name(Spam):
     assert Spam.egged.__qualname__.endswith('Spam.egged')
     assert Spam().egged.__name__ == 'egged'
     assert Spam().egged.__qualname__.endswith('Spam.egged')
+
+
+def test_cant_set(Spam):
+    """
+    Test that we can't actually set an event
+    """
+    with pytest.raises(AttributeError):
+        Spam().egged = 42
