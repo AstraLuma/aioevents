@@ -117,7 +117,7 @@ class BoundEvent(set, Generic[C]):
         return callable
 
 
-class Event(BoundEvent):
+class Event(BoundEvent[C], Generic[C]):
     """
     An event that an object may fire.
 

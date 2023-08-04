@@ -868,6 +868,21 @@ pytest = ">=4.6"
 testing = ["fields", "hunter", "process-tests", "pytest-xdist", "six", "virtualenv"]
 
 [[package]]
+name = "pytest-mypy-testing"
+version = "0.1.1"
+description = "Pytest plugin to check mypy output."
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "pytest-mypy-testing-0.1.1.tar.gz", hash = "sha256:31b1b8ec869b2029b2e15ba9913c7dc089b6197626efd559d6e3c5e763a0725e"},
+    {file = "pytest_mypy_testing-0.1.1-py3-none-any.whl", hash = "sha256:2c10a079e4333550f648e66e1ab7ab5fc53f7791a690584abba549398e3441d7"},
+]
+
+[package.dependencies]
+mypy = ">=0.931"
+pytest = ">=7,<8"
+
+[[package]]
 name = "requests"
 version = "2.31.0"
 description = "Python HTTP for Humans."
@@ -1214,4 +1229,4 @@ trio = "*"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "f63b7996779a66421a2e44ec6ab3388dc487aa39f036758c62508f9987438d7a"
+content-hash = "5187fb54e9bf1fbc0f7944d0bf8cf1b06f5f904d0df06751eb3d2a5e0f2d9ef6"
