@@ -3,9 +3,11 @@ Events for asyncio
 """
 
 import asyncio
+from collections.abc import MutableMapping
 import inspect
 import logging
 import types
+from typing import Any, Callable, Generic, TypeVar, cast
 import weakref
 __all__ = 'Event',
 
@@ -44,11 +46,16 @@ def _call_handler_async(func, *pargs, **kwargs):
     return asyncio.create_task(_wrapper())
 
 
-class BoundEvent(set):
+C = TypeVar('C', bound=Callable)
+
+
+class BoundEvent(set, Generic[C]):
     """
     A bound event, produced when :class:`Event` is used as a property on an instance.
 
     Acts as a set for registered handlers.
+
+    The generic is the type of the handler. The first argument must be what this is bound to.
     """
     __doc__: str
 
@@ -88,7 +95,7 @@ class BoundEvent(set):
         """
         self.trigger(*pargs, **kwargs)
 
-    def handler(self, callable, *, weak: bool = False):
+    def handler(self, callable: C, *, weak: bool = False):
         """
         Registers a handler.
 
@@ -101,7 +108,8 @@ class BoundEvent(set):
         """
         if weak:
             if isinstance(callable, types.MethodType):
-                self.add(weakref.WeakMethod(callable, lambda ref: self.remove(ref)))
+                self.add(weakref.WeakMethod(
+                    cast(types.MethodType, callable), lambda ref: self.remove(ref)))
             else:
                 self.add(weakref.ref(callable, lambda ref: self.remove(ref)))
         else:
@@ -122,7 +130,7 @@ class Event(BoundEvent):
 
     def __init__(self, doc: str | None = None):
         super().__init__(doc)
-        self._instman = weakref.WeakKeyDictionary()
+        self._instman: MutableMapping[Any, BoundEvent] = weakref.WeakKeyDictionary()
 
     def __set_name__(self, owner: type, name: str):
         self.__name__ = name

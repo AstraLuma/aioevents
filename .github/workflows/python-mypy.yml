@@ -26,6 +26,6 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install poetry
           poetry install --with=test
-      - name: Lint with flake8
+      - name: Check with mypy
         run: |
           poetry run mypy aioevents
