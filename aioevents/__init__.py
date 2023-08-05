@@ -1,13 +1,14 @@
 """
 Events for asyncio
 """
+from __future__ import annotations
 
 import asyncio
 from collections.abc import MutableMapping
 import inspect
 import logging
 import types
-from typing import Any, Callable, Generic, Optional, Self, TypeVar, cast, overload
+from typing import Any, Callable, Generic, TypeVar, cast, overload
 import weakref
 __all__ = 'Event',
 
@@ -61,7 +62,12 @@ class BoundEvent(set, Generic[C]):
     __name__: str
     __qualname__: str
 
-    def __init__(self, doc: str | None = None, parent: 'Event | None' = None, owner: Any = None):
+    def __init__(
+        self,
+        doc: str | None = None,
+        parent: Event | None = None,
+        owner: Any | None = None,
+    ) -> None:
         if isinstance(doc, str):
             if not doc.startswith("Event:"):
                 doc = f"Event: {doc}"  # I'm not completely convinced this is a good idea
@@ -119,7 +125,10 @@ class BoundEvent(set, Generic[C]):
         return cast(C, callable)
 
 
-class Event(BoundEvent[C], Generic[C]):
+T = TypeVar('T')
+
+
+class Event(Generic[T], BoundEvent[Callable[[T], None]]):
     """
     An event that an object may fire.
 
@@ -130,23 +139,27 @@ class Event(BoundEvent[C], Generic[C]):
     __name__: str
     __qualname__: str
 
-    def __init__(self, doc: str | None = None):
+    def __init__(self, doc: str | None = None) -> None:
         super().__init__(doc)
         self._instman: MutableMapping[Any, BoundEvent] = weakref.WeakKeyDictionary()
 
-    def __set_name__(self, owner: type, name: str):
+    def __set_name__(self, owner: type[T], name: str) -> None:
         self.__name__ = name
         self.__qualname__ = f"{owner.__qualname__}.{name}"
 
     @overload
-    def __get__(self, obj: None, type: type) -> Self:
+    def __get__(self, obj: None, type: type[T]) -> Event[T]:
         pass
 
     @overload
-    def __get__(self, obj: object, type: Optional[type]) -> BoundEvent[C]:
+    def __get__(self, obj: T, type: type[T]) -> BoundEvent[Callable[[T], None]]:
         pass
 
-    def __get__(self, obj: Optional[object], type: Optional[type] = None) -> Self | BoundEvent[C]:
+    def __get__(
+        self,
+        obj: T | None,
+        type: type[T],
+    ) -> Event[T] | BoundEvent[Callable[[T], None]]:
         if obj is None:
             return self
         elif obj not in self._instman:
