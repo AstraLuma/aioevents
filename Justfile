@@ -14,6 +14,11 @@ test *ARGS:
 lint:
   poetry run flake8
 
+# Runs type checks
+mypy:
+  poetry run mypy aioevents
+
+
 # Call the docs Makefile
 docs +TARGETS:
   make -C docs {{TARGETS}}

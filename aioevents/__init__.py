@@ -3,9 +3,11 @@ Events for asyncio
 """
 
 import asyncio
+from collections.abc import MutableMapping
 import inspect
 import logging
 import types
+from typing import Any, Callable, Generic, Optional, Self, TypeVar, cast, overload
 import weakref
 __all__ = 'Event',
 
@@ -44,15 +46,22 @@ def _call_handler_async(func, *pargs, **kwargs):
     return asyncio.create_task(_wrapper())
 
 
-class BoundEvent(set):
+C = TypeVar('C', bound=Callable)
+
+
+class BoundEvent(set, Generic[C]):
     """
     A bound event, produced when :class:`Event` is used as a property on an instance.
 
     Acts as a set for registered handlers.
+
+    The generic is the type of the handler. The first argument must be what this is bound to.
     """
     __doc__: str
+    __name__: str
+    __qualname__: str
 
-    def __init__(self, doc: str | None = None, parent: 'Event | None' = None, owner=None):
+    def __init__(self, doc: str | None = None, parent: 'Event | None' = None, owner: Any = None):
         if isinstance(doc, str):
             if not doc.startswith("Event:"):
                 doc = f"Event: {doc}"  # I'm not completely convinced this is a good idea
@@ -88,7 +97,7 @@ class BoundEvent(set):
         """
         self.trigger(*pargs, **kwargs)
 
-    def handler(self, callable, *, weak: bool = False):
+    def handler(self, callable: C, *, weak: bool = False) -> C:
         """
         Registers a handler.
 
@@ -100,16 +109,17 @@ class BoundEvent(set):
             weak: Should we keep a strong or weak ref?
         """
         if weak:
-            if isinstance(callable, types.MethodType):
-                self.add(weakref.WeakMethod(callable, lambda ref: self.remove(ref)))
+            if inspect.ismethod(callable):
+                self.add(weakref.WeakMethod(
+                    cast(types.MethodType, callable), lambda ref: self.remove(ref)))
             else:
                 self.add(weakref.ref(callable, lambda ref: self.remove(ref)))
         else:
             self.add(callable)
-        return callable
+        return cast(C, callable)
 
 
-class Event(BoundEvent):
+class Event(BoundEvent[C], Generic[C]):
     """
     An event that an object may fire.
 
@@ -122,13 +132,21 @@ class Event(BoundEvent):
 
     def __init__(self, doc: str | None = None):
         super().__init__(doc)
-        self._instman = weakref.WeakKeyDictionary()
+        self._instman: MutableMapping[Any, BoundEvent] = weakref.WeakKeyDictionary()
 
     def __set_name__(self, owner: type, name: str):
         self.__name__ = name
         self.__qualname__ = f"{owner.__qualname__}.{name}"
 
-    def __get__(self, obj, type=None) -> BoundEvent:
+    @overload
+    def __get__(self, obj: None, type: type) -> Self:
+        pass
+
+    @overload
+    def __get__(self, obj: object, type: Optional[type]) -> BoundEvent[C]:
+        pass
+
+    def __get__(self, obj: Optional[object], type: Optional[type] = None) -> Self | BoundEvent[C]:
         if obj is None:
             return self
         elif obj not in self._instman:

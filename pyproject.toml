@@ -28,6 +28,8 @@ pytest = "^7.4.0"
 pytest-asyncio = "^0.21.0"
 flake8 = "^6.0.0"
 pytest-cov = "^4.1.0"
+mypy = "^1.4.1"
+pytest-mypy-testing = "^0.1.1"
 
 
 [tool.pytest.ini_options]
@@ -35,7 +37,7 @@ minversion = "7.4"
 testpaths = [
     "tests",
 ]
-required_plugins = "pytest-asyncio"
+required_plugins = "pytest-asyncio pytest-mypy-testing"
 asyncio_mode = "auto"
 
 
